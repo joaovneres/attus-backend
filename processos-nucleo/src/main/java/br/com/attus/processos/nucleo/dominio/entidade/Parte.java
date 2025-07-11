@@ -6,9 +6,11 @@ import br.com.attus.processos.nucleo.dominio.vo.DocumentoFiscal;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @SuppressWarnings("java:S2160")
 @Getter
+@Setter
 @NoArgsConstructor
 @Entity
 @Table(name = "parte",
