@@ -1,0 +1,42 @@
+image:
+  registry: ghcr.io
+  repository: joaovneres/attus-backend
+  tag: latest
+
+postgres:
+  fullnameOverride: postgres
+  host: postgres
+  auth:
+    username: process
+    existingSecret: attus-processo-db
+    secretKeys:
+      adminPasswordKey: db-password
+    database: processdb
+
+  primary:
+    persistence:
+      enabled: true
+      size: 5Gi
+      storageClass: "oci-bv"
+
+kafka:
+  fullnameOverride: kafka
+  controller:
+    persistence:
+      enabled: true
+      size: 10Gi
+      storageClass: "oci-bv"
+  kraft:
+    enabled: false
+  zookeeper:
+    persistence:
+      enabled: true
+      size: 5Gi
+      storageClass: "oci-bv"
+
+app:
+  datasource:
+    host: postgres
+    port: 5432
+  kafka:
+    bootstrapServers: "PLAINTEXT://kafka:9092"

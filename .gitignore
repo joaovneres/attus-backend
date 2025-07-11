@@ -1,39 +1,63 @@
-HELP.md
-target/
-.mvn/wrapper/maven-wrapper.jar
+# ─── Arquivos auxiliares e diretórios binários ───────────────
+**/HELP.md
+**/target/
+**/.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+**/build/
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
+# ─── STS (Spring Tool Suite) ─────────────────────────────────
+**/.apt_generated
+**/.classpath
+**/.factorypath
+**/.project
+**/.settings
+**/.springBeans
+**/.sts4-cache
 
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
+# ─── IntelliJ IDEA ───────────────────────────────────────────
+**/.idea/
+**/*.iws
+**/*.iml
+**/*.ipr
 
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
+# ─── NetBeans ────────────────────────────────────────────────
+**/nbproject/private/
+**/nbbuild/
+**/dist/
+**/nbdist/
+**/.nb-gradle/
 
-### VS Code ###
-.vscode/
+# ─── VS Code ─────────────────────────────────────────────────
+**/.vscode/
 
-### SonarQube ###
-.sonarlint/
+# ─── SonarQube ───────────────────────────────────────────────
+**/.sonarlint/
 
-### Pre-commit hooks ###
-.pre-commit-config.yaml
+# ─── Pre-commit Hooks ────────────────────────────────────────
+**/.pre-commit-config.yaml
+
+# ─── Arquivos sensíveis / segredos ───────────────────────────
+**/*.env*
+!**/kubeconfig*
+**/*.kubeconfig
+**/*.pem
+**/*.key
+
+# ─── Logs e relatórios ───────────────────────────────────────
+**/*.log
+**/target/site/jacoco/
+!**/.scannerwork/
+
+# ─── Helm ────────────────────────────────────────────────────
+**/charts/
+**/*.tgz
+**/Chart.lock
+
+# ─── Docker / Docker Compose ─────────────────────────────────
+**/docker/*.jar
+**/docker-volume/
+
+# ─── Arquivos de sistema / caches ────────────────────────────
+**/.DS_Store
+**/Thumbs.db

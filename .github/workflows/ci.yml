@@ -1,0 +1,145 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/${{ github.repository }}
+  JAVA_VERSION: 17
+
+jobs:
+
+  # ────────────── JOB 1: Build, Test, Sonar ──────────────
+  build-test-sonar:
+    name: "Build • Test • Sonar"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "Checkout code"
+        uses: actions/checkout@v4
+
+      - name: "Restore Maven cache"
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2-
+
+      - name: "Setup Java"
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+
+      - name: "Maven verify"
+        run: |
+          chmod +x ./mvnw
+          ./mvnw -B verify
+
+      - name: "Sonar Scan"
+        if: github.event_name != 'pull_request'
+        run: |
+          ./mvnw -B sonar:sonar \
+            -Dsonar.projectKey=joaovneres_attus-processo \
+            -Dsonar.organization=joaovneres
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "Upload Jacoco Report"
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: "**/target/site/jacoco"
+
+  # ────────────── JOB 2: Docker Image ──────────────
+  docker-image:
+    name: "Build & Push Docker (${{ matrix.module }})"
+    needs: build-test-sonar
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        module: [processos-api, processos-consumidor, processos-evento-kafka]
+
+    steps:
+      - name: "Checkout code"
+        uses: actions/checkout@v4
+
+      - name: "Login to GHCR"
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "Build & Push Docker Image"
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: processos-infra/docker/${{ fromJSON('{"processos-api":"api.Dockerfile","processos-consumidor":"consumer.Dockerfile","processos-evento-kafka":"publisher.Dockerfile"}')[matrix.module] }}
+          push: true
+          build-args: |
+            MODULE=${{ matrix.module }}
+          tags: |
+            ${{ env.IMAGE_PREFIX }}:${{ github.sha }}-${{ matrix.module }}
+            ${{ env.IMAGE_PREFIX }}:latest-${{ matrix.module }}
+
+  # ────────────── JOB 3: Helm Chart ──────────────
+  helm-package:
+    name: "Helm Chart"
+    needs: docker-image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "Checkout code"
+        uses: actions/checkout@v4
+
+      - name: "Restore Maven cache"
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2-
+
+      - name: "Package Helm Chart"
+        run: ./mvnw -pl processos-infra -am package -q
+
+      - name: "Upload Helm Chart"
+        uses: actions/upload-artifact@v4
+        with:
+          name: helm-chart
+          path: processos-infra/target/*.tgz
+
+      # ─────────── Helm deploy: Manual (workflow_dispatch) ───────────
+      - name: "Setup kubectl"
+        if: github.event_name == 'workflow_dispatch'
+        uses: azure/setup-kubectl@v4
+        with:
+          version: latest
+
+      - name: "Setup Helm"
+        if: github.event_name == 'workflow_dispatch'
+        uses: azure/setup-helm@v3
+
+      - name: "Write kubeconfig"
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          echo "${KUBECONFIG}" > kubeconfig
+          echo "KUBECONFIG=$PWD/kubeconfig" >> $GITHUB_ENV
+        env:
+          KUBECONFIG: ${{ secrets.KUBECONFIG }}
+
+      - name: "Helm Upgrade (Manual)"
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          helm upgrade --install attus-processo processos-infra/target/*.tgz \
+            --namespace process --create-namespace \
+            --set image.tag=${{ github.sha }}

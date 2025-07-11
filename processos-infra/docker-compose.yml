@@ -1,0 +1,46 @@
+version: "3.9"
+
+networks:
+  process-net:
+
+volumes:
+  db-data:
+  zk-data:
+  kafka-data:
+
+services:
+
+  postgres:
+    image: postgres:16
+    env_file: .env
+    volumes: [ "db-data:/var/lib/postgresql/data" ]
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER}" ]
+      interval: 10s
+      retries: 5
+    networks: [ process-net ]
+
+  zookeeper:
+    image: bitnami/zookeeper:3.9
+    environment: { ALLOW_ANONYMOUS_LOGIN: "yes" }
+    networks: [ process-net ]
+
+  kafka:
+    image: bitnami/kafka:3.7
+    env_file: .env
+    depends_on: [ zookeeper ]
+    volumes: [ "kafka-data:/bitnami/kafka" ]
+    networks: [ process-net ]
+
+  api:
+    image: ghcr.io/${GITHUB_REPOSITORY}:latest-api
+    env_file: .env
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+    depends_on:
+      postgres: { condition: service_healthy }
+      kafka:    { condition: service_started }
+    ports: [ "8080:8080" ]
+    networks: [ process-net ]

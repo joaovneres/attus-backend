@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "attus.fullname" . }}-api
+  labels: {{ include "attus.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector: {{ include "attus.selectorLabels" . | nindent 4 }}
+  ports:
+    - port: 80
+      targetPort: 8080
+      protocol: TCP
+      name: http
