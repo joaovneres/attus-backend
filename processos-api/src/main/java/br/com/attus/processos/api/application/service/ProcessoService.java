@@ -2,7 +2,7 @@ package br.com.attus.processos.api.application.service;
 
 import br.com.attus.processos.api.adapter.in.web.dto.ProcessoDto;
 import br.com.attus.processos.api.adapter.in.web.mapper.ProcessoMapper;
-import br.com.attus.processos.nucleo.application.port.out.ProcessoCommandPublisherPort;
+import br.com.attus.processos.nucleo.application.port.out.processo.ProcessoCommandPublisherPort;
 import br.com.attus.processos.nucleo.application.port.out.processo.ProcessoFilter;
 import br.com.attus.processos.nucleo.application.port.out.processo.ProcessoRepositoryPort;
 import br.com.attus.processos.nucleo.dominio.entidade.Processo;

@@ -1,4 +1,4 @@
-package br.com.attus.processos.nucleo.application.port.out;
+package br.com.attus.processos.nucleo.application.port.out.processo;
 
 import br.com.attus.processos.nucleo.dominio.event.ProcessoCommand;
 
