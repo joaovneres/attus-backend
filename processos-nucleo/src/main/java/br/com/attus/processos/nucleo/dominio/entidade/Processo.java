@@ -4,12 +4,14 @@ import br.com.attus.processos.nucleo.dominio.enums.StatusProcesso;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
 
 import java.time.LocalDate;
 
 @SuppressWarnings("java:S2160")
 @Getter
+@Setter
 @NoArgsConstructor
 @Entity
 @Table(name = "processo",
