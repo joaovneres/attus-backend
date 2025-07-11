@@ -2,10 +2,12 @@ package br.com.attus.processos.api.application.service;
 
 import br.com.attus.processos.api.adapter.in.web.dto.ProcessoDto;
 import br.com.attus.processos.api.adapter.in.web.mapper.ProcessoMapper;
+import br.com.attus.processos.nucleo.application.port.out.ProcessoCommandPublisherPort;
 import br.com.attus.processos.nucleo.application.port.out.processo.ProcessoFilter;
 import br.com.attus.processos.nucleo.application.port.out.processo.ProcessoRepositoryPort;
 import br.com.attus.processos.nucleo.dominio.entidade.Processo;
 import br.com.attus.processos.nucleo.dominio.enums.StatusProcesso;
+import br.com.attus.processos.nucleo.dominio.event.ProcessoCommand;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -16,15 +18,23 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ProcessoService {
 
-    private final ProcessoRepositoryPort repo;
+    private final ProcessoCommandPublisherPort publisher;   // nova porta
+    private final ProcessoRepositoryPort repo;              // lê para buscar
     private final ProcessoMapper mapper;
 
-    @Transactional
-    public ProcessoDto.Response criar(ProcessoDto.CreateRequest dto) {
-        Processo processo = mapper.toEntity(dto);
-        repo.save(processo);
-        return mapper.toDto(processo);
+    public void criar(ProcessoDto.CreateRequest dto) {
+        publisher.publish(new ProcessoCommand.Create(
+                dto.numero(), dto.dataAbertura(), dto.descricao()));
     }
+
+    public void atualizar(Long id, ProcessoDto.UpdateRequest dto) {
+        publisher.publish(new ProcessoCommand.UpdateDesc(id, dto.descricao()));
+    }
+
+    public void mudarStatus(Long id, StatusProcesso novo) {
+        publisher.publish(new ProcessoCommand.ChangeStatus(id, novo));
+    }
+
 
     @Transactional(readOnly = true)
     public ProcessoDto.Response buscar(Long id) {
@@ -37,28 +47,5 @@ public class ProcessoService {
     public Page<ProcessoDto.Response> pesquisar(ProcessoFilter f, Pageable pg) {
         return repo.search(f, pg)
                 .map(mapper::toDto);
-    }
-
-    @Transactional
-    public ProcessoDto.Response atualizar(Long id, ProcessoDto.UpdateRequest dto) {
-        Processo p = repo.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Processo não encontrado"));
-        mapper.update(dto, p);
-        repo.flush();
-        return mapper.toDto(p);
-    }
-
-    @Transactional
-    public ProcessoDto.Response mudarStatus(Long id, StatusProcesso novo) {
-        Processo p = repo.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Processo não encontrado"));
-
-        switch (novo) {
-            case ARQUIVADO  -> p.arquivar();
-            case SUSPENSO   -> p.suspender();
-            case ATIVO      -> p.reabrir();
-        }
-        repo.flush();
-        return mapper.toDto(p);
     }
 }
