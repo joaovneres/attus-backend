@@ -1,0 +1,12 @@
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html        # deixa atalho clássico
+    operationsSorter: method
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/processdb
+    username: admin
+    password: admin123
+  jpa:
+    hibernate:
+      ddl-auto: validate
