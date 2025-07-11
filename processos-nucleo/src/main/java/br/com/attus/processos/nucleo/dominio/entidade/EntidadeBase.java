@@ -1,17 +1,19 @@
 package br.com.attus.processos.nucleo.dominio.entidade;
 
 import jakarta.persistence.*;
+
+import java.time.Instant;
+
 import lombok.Getter;
-import lombok.Setter;
-import org.hibernate.annotations.*;
+import org.hibernate.annotations.Filter;
+import org.hibernate.annotations.FilterDef;
+import org.hibernate.annotations.ParamDef;
+import org.hibernate.annotations.SQLDelete;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.time.Instant;
-
 @Getter
-@Setter
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
 @FilterDef(name = "ativoFilter", parameters = @ParamDef(name = "ativo", type = Boolean.class))
@@ -21,6 +23,7 @@ public abstract class EntidadeBase {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(updatable = false)
     private Long id;
 
     @CreatedDate
@@ -32,19 +35,25 @@ public abstract class EntidadeBase {
     private Instant atualizadoEm;
 
     @Column(nullable = false)
-    private Boolean ativo = true;
+    private boolean ativo = true;
+
+    public void desativar() {
+        this.ativo = false;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof EntidadeBase other)) {
-            return false;
-        }
+    public final boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof EntidadeBase other)) return false;
         return id != null && id.equals(other.id);
     }
 
     @Override
-    public int hashCode() { return getClass().hashCode(); }
+    public final int hashCode() {
+        return getClass().hashCode();
+    }
 }

@@ -6,8 +6,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface ParteRepositoryPort {
+
     Optional<Parte> findById(Long id);
+
     Parte save(Parte parte);
+
     Page<Parte> search(ParteFilter filter, Pageable pageable);
+
     void flush();
 }

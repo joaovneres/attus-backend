@@ -6,8 +6,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface AcaoRepositoryPort {
+
     Optional<Acao> findById(Long id);
+
     Acao save(Acao acao);
+
     Page<Acao> search(AcaoFilter filter, Pageable pageable);
+
     void flush();
 }

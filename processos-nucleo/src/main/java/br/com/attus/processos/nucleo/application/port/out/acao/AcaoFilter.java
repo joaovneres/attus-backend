@@ -8,4 +8,11 @@ public record AcaoFilter(
         TipoAcao tipo,
         LocalDate dataInicio,
         LocalDate dataFim
-) { }
+) {
+    public boolean isEmpty() {
+        return processoId == null &&
+                tipo        == null &&
+                dataInicio  == null &&
+                dataFim     == null;
+    }
+}

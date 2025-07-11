@@ -2,22 +2,21 @@ package br.com.attus.processos.nucleo.dominio.entidade;
 
 import br.com.attus.processos.nucleo.dominio.enums.StatusProcesso;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
 
 import java.time.LocalDate;
+import java.util.Objects;
 
-@SuppressWarnings("java:S2160")
+import lombok.*;
+
 @Getter
-@Setter
 @NoArgsConstructor
 @Entity
 @Table(name = "processo",
-        uniqueConstraints = @UniqueConstraint(name = "uk_numero_processo",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_numero_processo",
                 columnNames = "numero"))
 @ToString(onlyExplicitlyIncluded = true)
+@SuppressWarnings("java:S2160")
 public class Processo extends EntidadeBase {
 
     @ToString.Include
@@ -34,33 +33,47 @@ public class Processo extends EntidadeBase {
     @Column(nullable = false, length = 15)
     private StatusProcesso status = StatusProcesso.ATIVO;
 
-    public Processo(String numero, LocalDate dataAbertura, String descricao) {
-        this.numero = numero;
-        this.dataAbertura = dataAbertura;
+    public Processo(String numero,
+                    LocalDate dataAbertura,
+                    String descricao) {
+
+        this.numero = Objects.requireNonNull(numero, "numero não pode ser nulo");
+        this.dataAbertura = Objects.requireNonNull(dataAbertura, "dataAbertura não pode ser nula");
+        if (dataAbertura.isAfter(LocalDate.now())) {
+            throw new IllegalArgumentException("dataAbertura não pode estar no futuro");
+        }
         this.descricao = descricao;
     }
 
+    public Processo(Long id) {
+        this.setId(id);
+    }
+
     public void arquivar() {
-        verificarTransicao("Processo já está arquivado",
-                status == StatusProcesso.ARQUIVADO);
-        status = StatusProcesso.ARQUIVADO;
+        validarTransicao(StatusProcesso.ARQUIVADO,
+                "Processo já está arquivado");
+        this.status = StatusProcesso.ARQUIVADO;
     }
 
     public void suspender() {
-        verificarTransicao("Apenas processos ATIVOS podem ser suspensos",
-                status != StatusProcesso.ATIVO);
-        status = StatusProcesso.SUSPENSO;
+        if (status != StatusProcesso.ATIVO) {
+            throw new IllegalStateException("Apenas processos ATIVOS podem ser suspensos");
+        }
+        this.status = StatusProcesso.SUSPENSO;
     }
 
     public void reabrir() {
-        verificarTransicao("Apenas processos SUSPENSOS podem ser reabertos",
-                status != StatusProcesso.SUSPENSO);
-        status = StatusProcesso.ATIVO;
+        if (status != StatusProcesso.SUSPENSO) {
+            throw new IllegalStateException("Apenas processos SUSPENSOS podem ser reabertos");
+        }
+        this.status = StatusProcesso.ATIVO;
     }
 
-    private void verificarTransicao(String msgErro, boolean condicaoErro) {
-        if (condicaoErro) {
-            throw new IllegalStateException(msgErro);
-        }
+    public void atualizarDescricao(String novaDescricao) {
+        this.descricao = Objects.requireNonNull(novaDescricao, "novaDescricao não pode ser nula");
+    }
+
+    private void validarTransicao(StatusProcesso destino, String msgErro) {
+        if (this.status == destino) throw new IllegalStateException(msgErro);
     }
 }

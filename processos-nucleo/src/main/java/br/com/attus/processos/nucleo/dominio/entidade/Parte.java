@@ -4,18 +4,22 @@ import br.com.attus.processos.nucleo.dominio.enums.TipoParte;
 import br.com.attus.processos.nucleo.dominio.vo.Contato;
 import br.com.attus.processos.nucleo.dominio.vo.DocumentoFiscal;
 import jakarta.persistence.*;
+
+import java.util.Objects;
+
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@SuppressWarnings("java:S2160")
 @Getter
 @Setter
 @NoArgsConstructor
 @Entity
 @Table(name = "parte",
-        uniqueConstraints = @UniqueConstraint(name = "uk_cpf_cnpj_processo",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_cpf_cnpj_processo",
                 columnNames = {"processo_id", "cpf_cnpj"}))
+@SuppressWarnings("java:S2160")
 public class Parte extends EntidadeBase {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -41,10 +45,15 @@ public class Parte extends EntidadeBase {
                  DocumentoFiscal documentoFiscal,
                  TipoParte tipo,
                  Contato contato) {
-        this.processo = processo;
-        this.nome = nome;
-        this.documentoFiscal = documentoFiscal;
-        this.tipo = tipo;
+
+        this.processo = Objects.requireNonNull(processo, "processo não pode ser nulo");
+        this.nome = Objects.requireNonNull(nome, "nome não pode ser nulo");
+        this.documentoFiscal = Objects.requireNonNull(documentoFiscal, "documentoFiscal não pode ser nulo");
+        this.tipo = Objects.requireNonNull(tipo, "tipo não pode ser nulo");
         this.contato = contato;
+    }
+
+    public void atualizarContato(Contato novoContato) {
+        this.contato = novoContato;
     }
 }
