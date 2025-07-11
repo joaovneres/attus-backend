@@ -46,7 +46,7 @@ jobs:
         if: github.event_name != 'pull_request'
         run: |
           ./mvnw -B sonar:sonar \
-            -Dsonar.projectKey=joaovneres_attus-processo \
+            -Dsonar.projectKey=joaovneres_attus-backend \
             -Dsonar.organization=joaovneres
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
